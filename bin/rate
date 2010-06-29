@@ -1,0 +1,34 @@
+TIME_BETWEEN_SIGINTS=1
+time = (ARGV[0] || 60).to_f
+count = 0
+prev = 0
+reporter = proc do 
+    puts "rate is #{(count - prev) / time} lines/sec (sampling at #{time} secs)"
+    prev=count
+end
+last_time= Time.now
+trap "INT" do
+  new_time=Time.now
+  p new_time
+  p new_time-last_time
+  if new_time-last_time < TIME_BETWEEN_SIGINTS
+    exit
+  else
+    reporter.call
+    last_time = new_time
+  end
+end
+timer =Thread.new do 
+  while true
+    sleep(time)
+    reporter.call
+  end
+end
+reader =Thread.new do
+  while true
+    STDIN.gets
+    count+=1
+  end
+end
+reader.join
+timer.join
