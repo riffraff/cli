@@ -1,33 +1,71 @@
+#!/usr/bin/env ruby
+# vim: syntax=ruby expandtab sw=2 sts=2
+
 TIME_BETWEEN_SIGINTS=1
+
+class Stage
+  def initialize
+    @count=0
+    @prev=0
+  end
+  def input(line)
+    @count+=1
+    @line = line
+  end
+  def output
+    @line
+  end
+  def report
+    ret= [@count, @prev]
+    @prev=@count
+    ret
+  end
+end
+def setup_interrupt_handler
+  last_time= Time.now
+  trap "INT" do
+    new_time=Time.now
+    p new_time
+    p new_time-last_time
+    if new_time-last_time < TIME_BETWEEN_SIGINTS
+      exit
+    else
+      Reporter.call
+      last_time = new_time
+    end
+  end
+end
+
+$DEBUG=false
+setup_interrupt_handler()
 time = (ARGV[0] || 60).to_f
-count = 0
-prev = 0
-reporter = proc do 
-    puts "rate is #{(count - prev) / time} lines/sec (sampling at #{time} secs)"
-    prev=count
-end
-last_time= Time.now
-trap "INT" do
-  new_time=Time.now
-  p new_time
-  p new_time-last_time
-  if new_time-last_time < TIME_BETWEEN_SIGINTS
-    exit
-  else
-    reporter.call
-    last_time = new_time
+stage0 = Stage.new
+Reporter = proc do 
+  count, prev = stage0.report
+  if $DEBUG
+    p count, prev, time
   end
+  puts "rate is #{(count - prev) / time} lines/sec (sampling at #{time} secs)"
+  prev=count
 end
+
+should_run = true
 timer =Thread.new do 
-  while true
+  begin
     sleep(time)
-    reporter.call
-  end
+    Reporter.call
+  end while should_run
+  #Reporter.call
 end
 reader =Thread.new do
-  while true
-    STDIN.gets
-    count+=1
+  while should_run
+    line= STDIN.gets
+    if line.nil?
+      should_run = false
+      break
+    else
+      stage0.input(line)
+    end
   end
 end
 reader.join
