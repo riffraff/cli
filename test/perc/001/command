@@ -1,0 +1,1 @@
+ruby input.rb | perc '\d' '\w' '.'

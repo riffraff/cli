@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# vim: syntax=ruby expandtab sw=2 sts=2
+
+Regexen = {}
+ARGV.each {|e| Regexen[Regexp.new e]=0 }
+
+def report(what,count)
+  puts "%s\t%2.3f" % [what,count]
+end
+
+tot=0.0
+while line= STDIN.gets
+  Regexen.keys.each do |k|
+    Regexen[k]+=1 if k.match(line)
+  end
+  tot+=1
+end
+Regexen.each do |k,v|
+  report k.inspect, tot/v * 100
+end
