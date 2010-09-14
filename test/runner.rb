@@ -18,4 +18,5 @@ def make_runner(dir)
 end
 make_runner 'rate'
 make_runner 'perc'
+make_runner 'sum'
 

@@ -2,19 +2,33 @@
 # vim: syntax=ruby expandtab sw=2 sts=2
 
 Regexen = {}
+if ARGV.empty?
+  abort("usage #$0 regex regex regex < stream")
+end
 ARGV.each {|e| Regexen[Regexp.new e]=0 }
 
 def report(what,count)
-  puts "%s\t%2.3f" % [what,count]
+  puts "%s  %2.3f" % [what,count]
+end
+def finish(tot)
+  if tot.zero?
+    abort "no input received"
+  end
+  Regexen.each do |k,v|
+    report k.inspect, tot/v * 100
+  end
 end
 
 tot=0.0
-while line= STDIN.gets
-  Regexen.keys.each do |k|
-    Regexen[k]+=1 if k.match(line)
+begin
+  while line= STDIN.gets
+    Regexen.keys.each do |k|
+      Regexen[k]+=1 if k.match(line)
+    end
+    tot+=1
   end
-  tot+=1
-end
-Regexen.each do |k,v|
-  report k.inspect, tot/v * 100
+rescue
+  nil
+ensure
+  finish(tot)
 end
