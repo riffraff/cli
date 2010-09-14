@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+# vim: syntax=ruby 
+
+require 'optparse'
+options = {:fields => [1]}
+OptionParser.new do |opts|
+  opts.banner = "Usage: #$0 [-f field (, fields)] file (, files)"
+  opts.on("-f [fields]", "select field: 1 or 1,2,3") do |v|
+    options[:fields] = v.split(',')
+  end
+end.parse!
+
+tot=0
+#fields = ARGV.map do |x| x.to_i end
+fields = options[:fields].map do |f| f.to_i - 1 end
+tot= Hash.new(0)
+ARGF.each do |line|
+  cols= line.split(/\s+/)
+  fields.each do |x|
+    tot[x]+= (cols[x].to_i rescue 0)
+  end
+end
+tot.each do |k,v|
+  puts "field %s: %s" %[k,v]
+end
